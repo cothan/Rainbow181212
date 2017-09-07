@@ -2,7 +2,7 @@
 #define RAINBOW_H
 
 #include "GFpow.h"
-#define DEBUG 0
+#define DEBUG 1
 
 #ifdef OUTFILE
 void display(GFpow *ap, int const n, int const m, char *ch = " ");

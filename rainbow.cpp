@@ -7,8 +7,8 @@ int main()
 {
 	unsigned char sk[SECRETKEY_BYTES]; unsigned long sklen;
 	unsigned char pk[PUBLICKEY_BYTES]; unsigned long pklen;
-	unsigned char m[SHORTMESSAGE_BYTES]; unsigned long mlen = nv1 ;
-	unsigned char sm[SIGNATURE_BYTES] ; unsigned long smlen = ovn ;
+	unsigned char m[SHORTMESSAGE_BYTES]; unsigned long long mlen = nv1 ;
+	unsigned char sm[SIGNATURE_BYTES] ; unsigned long long smlen = ovn ;
 	
 	int i, eof ;
 	i=keypair( sk, & sklen, pk, & pklen ) ; //TODO: keypair function should take random inputs or inputs from a fil

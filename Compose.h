@@ -6,11 +6,11 @@
 int keypair(unsigned char * sk, unsigned long * sklen,
 	unsigned char * pk, unsigned long * pklen);
 
-int shortmessagesigned(unsigned char * m, unsigned long * mlen,
+int shortmessagesigned(unsigned char * m, unsigned long long * mlen,
 	const unsigned char * sm, unsigned long smlen,
 	const unsigned char * pk, unsigned long pklen);
 
-int signedshortmessage(unsigned char * sm, unsigned long * smlen,
+int signedshortmessage(unsigned char * sm, unsigned long long * smlen,
 	const unsigned char * m, unsigned long mlen,
 	const unsigned char * sk, unsigned long sklen);
 
