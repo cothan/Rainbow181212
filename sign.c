@@ -1,6 +1,7 @@
 #include "crypto_sign.h"
 #include "Compose.h"
 #include "sizes.h"
+#include "crypto_hash_sha256.h"
 
 
 // TODO: rand() source
@@ -12,7 +13,6 @@ int crypto_sign_keypair(
 {
     unsigned long sklen;
     unsigned long pklen;
-
     return keypair(sk, &sklen, pk, &pklen);
 }
 
@@ -23,12 +23,37 @@ int crypto_sign(
 )
 {
     unsigned long sklen = SECRETKEY_BYTES;
-    int res = signedshortmessage(sm, smlen, m, mlen, sk, sklen);
-    printf("Mess len %d, output text len %d \n", mlen, *smlen);
+
+    // Hash input message
+    unsigned char h[32];
+    crypto_hash_sha256(h,m,mlen);
+
+    // Sign hashed message
+    int res = signedshortmessage(sm, smlen, h, SHORTMESSAGE_BYTES, sk, sklen);
+    //printf("crypto_sign MLen %d Signed message len %d \n", mlen, *smlen);
+
+    printf("----------------------------------------------------------------\n");
+    printf("Hash input ");
+    for(int i = 0; i < 32; i++){
+    	printf("%d, ",h[i]);
+    }
+    printf("\n");
+    printf("Signature ");
+    for(int i = 0; i < *smlen; i++){
+        printf("%d, ",sm[i]);
+    }
+    printf("\n");
+
     if (res < 0)
     {
         return -1;
     }
+
+    // Append message to signature
+    for (int i = 0; i < mlen; ++i) {
+        sm[*smlen] = m[i];
+        ++*smlen;
+     }
     return 0;
 }
 
@@ -39,10 +64,19 @@ int crypto_sign_open(
 )
 {
     unsigned long pklen = PUBLICKEY_BYTES;
-    int res = shortmessagesigned(m, mlen, sm, smlen, pk, pklen);
+
+    // Hash input message
+    unsigned char h[32];
+    crypto_hash_sha256(h, sm + SIGNATURE_BYTES, smlen - SIGNATURE_BYTES);
+
+    int res = shortmessagesigned(h, mlen, sm, SIGNATURE_BYTES, pk, pklen);
+    printf("crypto_sign_open Message len %d , res %d \n", *mlen, res);
     if (res < 0)
     {
         return -1;
     }
+
+    for (unsigned int i = SIGNATURE_BYTES;i < smlen;++i) m[i - SIGNATURE_BYTES] = sm[i];
+      *mlen = smlen - SIGNATURE_BYTES;
     return 0;
 }

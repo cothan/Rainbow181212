@@ -292,6 +292,17 @@ int keypair(unsigned char *sk, unsigned long *sklen,
 		delete[] b[k];
 		delete[] c[k];
 	}
+	
+    printf("Public Key Len %d \n", *pklen);
+    printf("Public Key: ");
+    for(int i = 0; i < *pklen; i++) printf("%d, ", pk[i]);
+    printf("\n");
+    
+    printf("Secret Key Len %d \n", *sklen);
+    printf("Secret Key: ");
+    for(int i = 0; i < *sklen; i++) printf("%d, ", sk[i]);
+    printf("\n");
+    
 
 	return (0);
 }
@@ -300,6 +311,17 @@ int shortmessagesigned(unsigned char *m, unsigned long long *mlen,
 					   const unsigned char *sm, unsigned long smlen,
 					   const unsigned char *pk, unsigned long pklen)
 {
+	printf("Verification - Hash input ");
+	for(int i = 0; i < 32; i++){
+		printf("%d, ",m[i]);
+	}
+	printf("\n");
+
+	printf("Verification - Signature ");
+	for(int i = 0; i < smlen; i++){
+		printf("%d, ",sm[i]);
+	}
+	printf("\n");
 
 	int i, j, k, ij = 0, eof = 0;
 	if (smlen != ovn)
@@ -324,8 +346,8 @@ int shortmessagesigned(unsigned char *m, unsigned long long *mlen,
 
 		if (m[k] != temp.GFpowtochar())
 		{
-			// cout << "mismatch at k=" << k << " m[k] = " << GFpow(m[k])
-			// 	 << "  temp=" << temp << endl;
+			cout << "Mismatch at k=" << k << " m[k] = " << GFpow(m[k])
+			 	 << "  temp=" << temp << endl;
 			eof = -100;
 			m[k] = temp.GFpowtochar();
 			break;
