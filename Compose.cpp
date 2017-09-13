@@ -9,6 +9,7 @@ int randombyte(void)
 	return 255 & (int)c;
 }
 
+/*
 int keypair(unsigned char *sk, unsigned long *sklen,
 			unsigned char *pk, unsigned long *pklen)
 {
@@ -306,11 +307,249 @@ int keypair(unsigned char *sk, unsigned long *sklen,
 
 	return (0);
 }
+*/
+int keypair( unsigned char * sk, unsigned long * sklen,
+			unsigned char * pk, unsigned long * pklen) {
+
+    GFpow * a[nv1], * b[nv1], * c[nv1],   e[nv1] ;
+    GFpow  S[nv1*nv1], s[nv1] ;
+    GFpow  T[ovn*ovn], t[ovn];
+
+	GFpow R[2*ovn*ovn] ;
+
+	GFpow C[ovn1*ovn1] ;
+	GFpow C1[ovn1*ovn1];
+	GFpow L2[ovn1*ovn1] ;
+	GFpow D0[nv1][ovn1*ovn1] ;
+	GFpow D[nv1][ovn1*ovn1] ;
+	GFpow temp ;
+
+
+
+	int i,j,k, k0, ij,  eof;
+	const int rept = 1;
+	int oil, vinegar ;
+
+	// create L1 and check that L1 is not singular
+	// initialize affine transformation  L1 in S and s
+	// and also put s and S^-1 on sk
+
+	for ( ij = 0 ; ij < nv1 ; ij++ ) {
+		s[ij] = sk[ij] = randombyte() % deg_pow ;
+	}
+
+	eof = 1 ;
+	while ( eof ) {
+		for ( i = 0 ; i < nv1 ; i ++ ) {
+			for ( j = 0 ; j < nv1 ; j++ ) {
+				R[i*nv2+j] = S[i*nv1+j] = randombyte() % deg_pow ;
+			}
+			for ( ; j < nv2 ; j++ ) {
+				R[i*nv2+j] = 0 ;
+			}
+			R[i*nv2+nv1+i] = 1 ;
+		}
+
+		eof = nv1 - gauss( R, nv1, nv2 ) ;
+		//  if ( eof ) cout << "L1 was singular \n" ;
+	}
+
+	//  store S^(-1) in secrete key sk
+	for ( i = 0 ; i < nv1 ; i++ ) {
+		for ( j = nv1 ; j < nv2; j++ ){
+			sk[ij++] = R[i*nv2+j].GFpowtochar() ;
+		}
+	}
+
+
+
+	k = 0 ;
+	for( k0 = 0; k0 < un-1; k0++ ) {
+		oil = Slist[k0+1] - Slist[k0] ;
+		vinegar = Slist[k0] ;
+
+		for ( ; k < Slist[k0+1]-v1; k++ ) {
+
+			a[k] = new GFpow[oil*vinegar] ;
+			b[k] = new GFpow[vinegar*vinegar] ;
+			c[k] = new GFpow[vinegar+oil] ;
+
+			// cout << "\nallocate "<< oil*vinegar<<"  "<<vinegar*vinegar<<"  " <<vinegar * oil<<endl;
+
+			if ( oil == 1 ) {
+				for ( i = 0 ; i < vinegar; i++ ){
+					a[k][i] = 0 ;
+				}
+			}
+			else {
+				for ( i =0 ; i < oil; i++) 	{
+					for( j=0; j < vinegar; j++) {
+						a[k][j*oil+i] = sk[ij++] = randombyte() % deg_pow ;
+					}
+				}
+			}
+
+			e[k] = sk[ij++] = randombyte() % deg_pow ;     // generate in ordered needed by inverse
+
+			for( i=0; i < vinegar; i++) {
+				for ( j =0 ; j < vinegar; j++) {
+					if( j < i )
+						b[k][i*vinegar+j]=0 ;
+					else
+						b[k][i*vinegar+j] = sk[ij++] = randombyte() % deg_pow ;
+				}
+			}
+
+
+			for ( i = 0 ; i < vinegar+oil; i++)	c[k][i] = sk[ij++] = randombyte() % deg_pow ;
+			if ( oil == 1) {
+				i--;
+				while ( c[k][i] == 0 ) {
+					c[k][i] =  sk[ij-1] = randombyte() % deg_pow ;
+				}
+			}
+		}
+	}
+
+	// check that  L2 is not singular
+	// initialize affine transformation L2 in T and t
+
+
+	for ( i = 0 ; i < ovn ; i++ ) {
+		sk[ij++] = randombyte() % deg_pow ;
+		t[i] = GFpow( sk[ij-1] ) ;
+	}
+
+	eof = 1 ;
+	while ( eof ) {
+		for ( i = 0 ; i < ovn ; i ++ ) {
+			for ( j = 0 ; j < ovn ; j++ ) {
+				R[i*ovn2+j] = T[i*ovn+j] = randombyte() % deg_pow ;
+			}
+			for ( ; j < ovn2 ; j++ ) {
+				R[i*ovn2+j] = 0 ;
+			}
+			R[i*ovn2+ovn+i] = 1 ;
+		}
+		eof = ovn - gauss( R, ovn, ovn2 ) ;
+		// if ( eof ) cout << "L2 was singular \n" ;
+	}
+
+	//  store T^(-1) in secrete key sk
+	for ( i = 0 ; i < ovn ; i++ ) {
+		for ( j = ovn ; j < ovn2; j++ ){
+			sk[ij++] = R[i*ovn2+j].GFpowtochar() ;
+		}
+	}
+
+	* sklen = ij ;
+
+
+	//  Now create public key
+	// set up linear transformation  L2 in homogeneous form
+	// using matrices T and t
+
+	k = 0 ;
+	for ( i = 0 ; i < ovn; i++ ) {
+		for ( j = 0 ; j < ovn ; j++ ) {
+			L2[k++] = T[ovn*i + j ] ;
+		}
+		L2[k++] = t[i] ;
+	}
+	for ( j = 0; j < ovn ; j++ ) L2[k++] = 0 ;
+	L2[k] = 1 ;
+
+	k = 0 ;
+	for ( k0 = 0; k0 < un-1 ; k0++ ) {
+		oil = Slist[k0+1] - Slist[k0] ;
+		vinegar = Slist[k0] ;
+
+		for ( ; k < Slist[k0+1]-v1; k++ ) {
+
+			for ( i = 0 ; i < vinegar ; i++ ) {
+				for ( j = 0 ; j < vinegar; j++ ) {
+					C[i*ovn1+j] = b[k][i*vinegar+j] ;
+				}
+
+				for (j=0 ; j < oil; j++ ) C[i*ovn1+j+vinegar] = a[k][i*oil+j] ;
+
+			}
+			for (j=0  ; j < vinegar+oil ; j++ )  C[ovn*ovn1+j] = c[k][j] ;
+
+
+			C[ovn*ovn1+ovn] = e[k] ;
+
+
+
+
+			// form compostion with L2
+
+			for ( i = 0 ; i < ovn1 ; i++ ) {
+				for ( j = 0 ; j < ovn1; j++ ) {
+					temp = 0 ;
+					for ( ij = 0 ; ij < ovn1 ; ij++ ) {
+						temp += C[i*ovn1+ij]*L2[ij*ovn1+j] ;
+					}
+					C1[i*ovn1+j] =temp ;
+				}
+			}
+
+
+			for ( i = 0 ; i < ovn1*ovn1; i++) D0[k][i]=0 ;
+
+			for ( i = 0 ; i < ovn1 ; i++ ) {
+				for ( j = 0 ; j < ovn1; j++ ) {
+					temp = 0 ;
+					for ( ij = 0 ; ij < ovn1 ; ij++ ) {
+						temp += L2[ij*ovn1+i] * C1[ij*ovn1+j] ;
+					}
+					if ( i <= j ) D0[k][i*ovn1+j] =temp ;
+					else D0[k][j*ovn1+i] += temp ;
+				}
+			}
+
+		}
+	}
+
+	// Composition with L1, uses matrices S and s directly
+
+	for ( k = 0 ; k < nv1 ; k++ ) {
+
+		for ( i = 0 ; i < ovn1*ovn1 ; i++ ) D[k][i] = 0 ; // may not be needed, just in case
+		for ( j = 0 ; j < nv1; j++ ) {
+			for ( i = 0 ; i < ovn1*ovn1 ; i++ ) D[k][i]+=S[k*nv1+j]*D0[j][i] ;
+		}
+
+		D[k][--i] += s[k] ;     // affine part of L1
+
+	}
+
+
+	// write out public key
+	ij = 0 ;
+	for ( k = 0 ; k < nv1 ; k++ ) {
+
+		for ( i = 0 ; i < ovn1 ; i++ ) {
+			for ( j = i ; j < ovn1 ; j++ ) pk[ij++]= D[k][i*ovn1+j].GFpowtochar()  ;
+		}
+	}
+
+	* pklen = ij ;
+
+	for ( k = 0 ; k < Slist[k0+1]-v1; k++ ) {
+		delete [] a[k] ;
+		delete [] b[k] ;
+		delete [] c[k] ;
+	}
+
+	return(0) ;
+}
 
 int shortmessagesigned(unsigned char *m, unsigned long long *mlen,
 					   const unsigned char *sm, unsigned long smlen,
 					   const unsigned char *pk, unsigned long pklen)
 {
+#if DEBUG > 0
 	printf("Verification - Hash input ");
 	for(int i = 0; i < 32; i++){
 		printf("%d, ",m[i]);
@@ -322,7 +561,7 @@ int shortmessagesigned(unsigned char *m, unsigned long long *mlen,
 		printf("%d, ",sm[i]);
 	}
 	printf("\n");
-
+#endif
 	int i, j, k, ij = 0, eof = 0;
 	if (smlen != ovn)
 		return (-101);

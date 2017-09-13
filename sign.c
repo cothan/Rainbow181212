@@ -31,7 +31,7 @@ int crypto_sign(
     // Sign hashed message
     int res = signedshortmessage(sm, smlen, h, SHORTMESSAGE_BYTES, sk, sklen);
     //printf("crypto_sign MLen %d Signed message len %d \n", mlen, *smlen);
-
+#if DEBUG > 0
     printf("----------------------------------------------------------------\n");
     printf("Hash input ");
     for(int i = 0; i < 32; i++){
@@ -43,7 +43,7 @@ int crypto_sign(
         printf("%d, ",sm[i]);
     }
     printf("\n");
-
+#endif
     if (res < 0)
     {
         return -1;
