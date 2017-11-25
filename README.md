@@ -1,4 +1,6 @@
-rainbow181212 developed by Ahmed on behalf of CERG GMU. 
+## rainbow181212 
+
+Script was developed by Ahmed on behalf of CERG GMU. 
 
 Fully work, tested with SUPERCOP. 
 
@@ -18,7 +20,7 @@ To get result
 ./do-part crypto_sign rainbow18121
 ```
 
-The result in this Git is benchmarked at:
+The result in this Git is benchmarked by:
 
 ```
 Architecture:          x86_64
